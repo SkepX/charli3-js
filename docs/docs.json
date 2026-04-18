@@ -76,6 +76,12 @@
       }
     ]
   },
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/introduction"
+    }
+  ],
   "footer": {
     "socials": {
       "github": "https://github.com/SkepX/charli3-js"
