@@ -1,0 +1,84 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "charli3-js",
+  "colors": {
+    "primary": "#f97316",
+    "light": "#fb923c",
+    "dark": "#ea580c"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "type": "github",
+        "href": "https://github.com/SkepX/charli3-js"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "npm",
+      "href": "https://www.npmjs.com/package/charli3-js"
+    }
+  },
+  "navigation": {
+    "anchors": [
+      {
+        "anchor": "Live demo",
+        "icon": "browser",
+        "href": "https://charli3-js-demo.vercel.app"
+      },
+      {
+        "anchor": "npm package",
+        "icon": "box",
+        "href": "https://www.npmjs.com/package/charli3-js"
+      },
+      {
+        "anchor": "Charli3",
+        "icon": "link",
+        "href": "https://charli3.io"
+      }
+    ],
+    "groups": [
+      {
+        "group": "Get started",
+        "pages": [
+          "introduction",
+          "quickstart"
+        ]
+      },
+      {
+        "group": "Concepts",
+        "pages": [
+          "concepts/how-it-works",
+          "concepts/vs-python"
+        ]
+      },
+      {
+        "group": "Example app",
+        "pages": [
+          "example-app/overview",
+          "example-app/run-locally",
+          "example-app/walkthrough"
+        ]
+      },
+      {
+        "group": "AI agents",
+        "pages": [
+          "guides/ai-agents"
+        ]
+      },
+      {
+        "group": "API reference",
+        "pages": [
+          "api-reference/charli3"
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/SkepX/charli3-js"
+    }
+  }
+}
