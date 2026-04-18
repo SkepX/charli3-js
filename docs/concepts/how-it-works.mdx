@@ -63,7 +63,6 @@ Once the tx is on chain, anyone can call `getOdvReference("ADA/USD")` and see th
 
 ## The whole loop, side by side
 
-<Frame>
 ```
 reader side                        refresher side
 -----------                        --------------
@@ -73,7 +72,6 @@ getOdvReference()                  collectFeeds()      -> Round 1 (off-chain)
   return price + freshness           collect signatures
                                      submit()          -> Round 2 (on-chain)
 ```
-</Frame>
 
 Most apps only need the left side. The right side runs when the price expires.
 
