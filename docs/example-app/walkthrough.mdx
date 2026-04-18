@@ -1,21 +1,13 @@
 ---
 title: "Demo walkthrough"
-description: "Guided tour of every panel in the sample app, with screenshots."
+description: "Guided tour of every panel in the sample app."
 ---
 
 The fastest way to see what the SDK does: click through the demo and watch the chain change. The full tour takes about 5 minutes once Lace is funded.
 
-<Note>
-Screenshots below live in `docs/images/walkthrough/`. The deployed demo may differ slightly if this doc lags behind `main`.
-</Note>
-
 ## 1. The hero price
 
 Every page load reads the current ADA/USD price from chain using `c3.getOdvReference("ADA/USD")` in a Server Component. The SDK reads the datum for you, and the UI shows the value, whether it is fresh, and how old it is.
-
-<Frame caption="Live ADA/USD hero. Fresh means the datum is inside its 5-minute validity window.">
-  <img src="/images/walkthrough/hero.png" alt="Hero price block showing $0.324812 per ADA" />
-</Frame>
 
 **What the code does:**
 
@@ -29,10 +21,6 @@ If `price.isExpired` is true, the badge says `stale`, and the Refresh button in 
 ## 2. Run the loop
 
 Scroll to **Run the loop**. This runs the full pull-oracle flow with a small on-chain contract: deposit tADA, lock it behind a price rule, refresh, claim.
-
-<Frame caption="The three-step loop. Each step lands a tx on preprod.">
-  <img src="/images/walkthrough/run-the-loop.png" alt="Deposit, Refresh, Claim panel" />
-</Frame>
 
 <Steps>
   <Step title="Connect Lace">
@@ -54,10 +42,6 @@ Scroll to **Run the loop**. This runs the full pull-oracle flow with a small on-
 ## 3. AI agent: pay a USD invoice in ADA
 
 Scroll to **AI agent: pay a USD invoice in ADA**. This is the big feature: a GPT-4o-mini agent uses `charli3-js` as a tool and pays a USD invoice in ADA.
-
-<Frame caption="The agent panel gates behind Lace. No chat until the wallet is connected.">
-  <img src="/images/walkthrough/agent-gate.png" alt="Connect Lace gate" />
-</Frame>
 
 <Steps>
   <Step title="Connect Lace">
@@ -82,10 +66,6 @@ Scroll to **AI agent: pay a USD invoice in ADA**. This is the big feature: a GPT
   </Step>
 </Steps>
 
-<Frame caption="Tool-call timeline: read price, refresh if stale, validate address, propose payment.">
-  <img src="/images/walkthrough/agent-trace.png" alt="Tool-call thought process with Cardanoscan link" />
-</Frame>
-
 ## 4. Copy skill.md to give any agent this power
 
 The agent header has a **copy skill.md** button. It copies one markdown file you can paste into any tool-calling LLM (Claude, Cursor, Masumi agents, custom OpenAI setups) so that agent can read and refresh Charli3 prices without copying any code.
@@ -97,10 +77,6 @@ The agent header has a **copy skill.md** button. It copies one markdown file you
 ## 5. Side by side: Python SDK vs charli3-js
 
 The bottom of the page has a tab that shows the same refresh action in both SDKs. The `charli3-js` side is one Next.js API route. The Python side is a YAML config, a Python file, and a plan for hosting them outside your web app.
-
-<Frame>
-  <img src="/images/walkthrough/code-compare.png" alt="Python SDK vs charli3-js side by side" />
-</Frame>
 
 [Full comparison](/concepts/vs-python).
 
