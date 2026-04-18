@@ -52,6 +52,14 @@ export default function NavBar() {
         </ul>
         <div className="nav-external">
           <a
+            href="https://charli3-js-bc690dc5.mintlify.app/introduction"
+            target="_blank"
+            rel="noreferrer"
+            className="nav-pill"
+          >
+            Docs
+          </a>
+          <a
             href="https://www.npmjs.com/package/charli3-js"
             target="_blank"
             rel="noreferrer"
