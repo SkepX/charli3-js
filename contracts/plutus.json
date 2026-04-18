@@ -1,0 +1,85 @@
+{
+  "preamble": {
+    "title": "charli3js/price_gated_payout",
+    "description": "Example Aiken contract consuming a Charli3 oracle feed as a reference input.",
+    "version": "0.1.0",
+    "plutusVersion": "v2",
+    "compiler": {
+      "name": "Aiken",
+      "version": "v1.0.29-alpha+16fb02e"
+    },
+    "license": "MIT"
+  },
+  "validators": [
+    {
+      "title": "price_gated_payout.price_gated_payout",
+      "datum": {
+        "title": "datum",
+        "schema": {
+          "$ref": "#/definitions/price_gated_payout~1Datum"
+        }
+      },
+      "redeemer": {
+        "title": "_redeemer",
+        "schema": {
+          "$ref": "#/definitions/price_gated_payout~1Redeemer"
+        }
+      },
+      "parameters": [
+        {
+          "title": "oracle_policy_id",
+          "schema": {
+            "$ref": "#/definitions/ByteArray"
+          }
+        },
+        {
+          "title": "oracle_token_name",
+          "schema": {
+            "$ref": "#/definitions/ByteArray"
+          }
+        }
+      ],
+      "compiledCode": "59037001000032323232323232232232232322322533300b3253323300d3001300e37546004601e6ea800c4c8c8c8c8c94cc8cc04cc004c050dd50010991919299980b19b89375a601260306ea8044c94ccc05cc014c060dd5000899299980c1809180c9baa0011375a603a60346ea800458c8cc004004dd5980e980d1baa00222533301c00114c103d87a80001323232533301c3016375a603a00626018660406ea00052f5c026600a00a0046eb4c074008c080008c07800458c024c060dd500188008a5032323300100100822533301b00114a0264a66603266e3cdd7180f0010020a51133003003001301e001375c6014602e6ea80414ccc050c038c054dd500089919299980c980e00109924c64a66602e60220022a66603460326ea80085261615333017300b0011533301a301937540042930b0a99980b980280089919299980e180f80109924c646600200200444a66603c00229309919801801981100119191bad301f002375a603a00260400022c6eacc074004c064dd50010b180b9baa00116301a001301637540022c6030602a6ea8008dc3a40082c602c602e602e60266ea8c018c04cdd519299980a8008b0a99980a980c0008980b8008b19198008009bac301700422533301600114bd7009919299980a980499299980b1805180b9baa0011480004dd6980d980c1baa001325333016300a30173754002298103d87a8000132330010013756603860326ea8008894ccc06c004530103d87a8000132323232533301c337220300042a66603866e3c0600084c030cc080dd4000a5eb80530103d87a8000133006006003375a603a0066eb8c06c008c07c008c074004c8cc004004dd59805980c1baa300b3018375400644a666034002298103d87a8000132323232533301b337220320042a66603666e3c0640084c02ccc07cdd3000a5eb80530103d87a8000133006006003375660380066eb8c068008c078008c0700044cc064008cc0100100044cc010010004c068008c060004dd2a40006eb0c050c054c054c054c054c054c054c054004c050c040dd5180098081baa00423013001370e90010b1180898090008a4c26caca666012600660146ea800454ccc030c02cdd50008a4c2c2ca66600e600260106ea80084c8c8c8c94ccc038c04400852616375c601e002601e0046eb4c034004c024dd50010b1b8748000dd70009bae0015734aae7555cf2ab9f5740ae855d101",
+      "hash": "4ef5d19cf0dc04b746bb940c4853e9773b26ec5081364836f8dccd86"
+    }
+  ],
+  "definitions": {
+    "ByteArray": {
+      "dataType": "bytes"
+    },
+    "Int": {
+      "dataType": "integer"
+    },
+    "price_gated_payout/Datum": {
+      "title": "Datum",
+      "anyOf": [
+        {
+          "title": "Datum",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "threshold_price",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "beneficiary",
+              "$ref": "#/definitions/ByteArray"
+            }
+          ]
+        }
+      ]
+    },
+    "price_gated_payout/Redeemer": {
+      "title": "Redeemer",
+      "anyOf": [
+        {
+          "title": "Claim",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": []
+        }
+      ]
+    }
+  }
+}

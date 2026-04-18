@@ -1,0 +1,48 @@
+{
+  "name": "charli3-js",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for Charli3 Oracle on Cardano — read prices and collect feeds in 3 lines",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "example:price": "ts-node examples/read-price.ts",
+    "example:list": "ts-node examples/list-feeds.ts",
+    "example:feeds": "ts-node examples/collect-feeds.ts",
+    "example:decode": "ts-node examples/decode-synthetic.ts",
+    "example:verify": "ts-node examples/verify-signatures.ts",
+    "example:round2": "ts-node examples/submit-round2.ts",
+    "demo": "ts-node examples/demo-smart-contract.ts",
+    "demo:setup": "ts-node demo/setup.ts",
+    "demo:deposit": "ts-node demo/deposit.ts",
+    "demo:claim": "ts-node demo/claim.ts"
+  },
+  "keywords": [
+    "cardano",
+    "oracle",
+    "charli3",
+    "defi",
+    "price-feed",
+    "web3",
+    "typescript"
+  ],
+  "license": "MIT",
+  "author": "",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@lucid-evolution/lucid": "^0.4.29",
+    "cbor-x": "^1.5.9"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.0"
+  }
+}
