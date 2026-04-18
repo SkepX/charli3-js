@@ -90,25 +90,6 @@ Follow the [walkthrough](/example-app/walkthrough) for a guided tour. TL;DR:
 3. Click **Claim locked tADA**. The Aiken validator releases the deposit because the price clears the threshold.
 4. Scroll to **AI agent**, click **Connect Lace**, paste the sample invoice, and sign the payment.
 
-## Deploy to Vercel
-
-<AccordionGroup>
-  <Accordion title="Deploy">
-    ```bash
-    cd demo-nextjs
-    vercel deploy
-    ```
-
-    Set the same two env vars in the Vercel dashboard. The `demo/.wallet.seed` file is read at runtime from the repo root, so it has to be in your private fork or uploaded as a file. For a public deploy, rotate the seed and keep it off GitHub.
-  </Accordion>
-  <Accordion title="Function timeouts">
-    The agent route has `maxDuration = 120` so a Round 2 tx can confirm. Vercel Hobby limits you to 10 seconds, so you need Pro or higher for the full flow. Or run the refresh in the browser.
-  </Accordion>
-  <Accordion title="Pick a region">
-    Pick a region near Blockfrost's infrastructure (Europe works well). Cold starts matter for Round 2, so keep the function warm if you expect traffic.
-  </Accordion>
-</AccordionGroup>
-
 ## Troubleshooting
 
 <AccordionGroup>

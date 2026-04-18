@@ -1,0 +1,300 @@
+---
+title: "SDK guide"
+description: "Every function in charli3-js with a working example and what it returns."
+---
+
+This is the end-to-end usage guide. It walks through every public method on the `Charli3` class in the order you will actually use them. Copy the snippets, they work as-is against preprod.
+
+## Install
+
+```bash
+npm i charli3-js @lucid-evolution/lucid
+```
+
+Env needed:
+
+- `BLOCKFROST_PROJECT_ID` from [blockfrost.io](https://blockfrost.io) (only for the refresh flow, reads do not need it).
+
+## Create the client
+
+```ts
+import { Charli3 } from "charli3-js";
+
+const c3 = new Charli3({ network: "preprod" });
+```
+
+### Constructor options
+
+```ts
+interface Charli3Config {
+  network: "preprod" | "mainnet";
+  kupoUrl?: string;              // override the baked-in Kupo endpoint
+  blockfrostProjectId?: string;  // reserved for future use
+}
+```
+
+The preset baked into the SDK has addresses, policy IDs, oracle node URLs, and the reference script for both networks. You never have to look those up.
+
+## Reading prices
+
+### getOdvReference(pair)
+
+The main read. Returns the current on-chain price for one pair, plus the UTXO it came from so you can cite it.
+
+```ts
+const ref = await c3.getOdvReference("ADA/USD");
+
+ref.pair;              // "ADA/USD"
+ref.price.value;       // 0.324812  (USD per ADA, number)
+ref.price.rawValue;    // 324812n   (base-unit bigint at 1e6 precision)
+ref.price.precision;   // 6
+ref.price.createdAt;   // Date, when the datum was posted
+ref.price.expiresAt;   // Date, when it becomes stale (5 min window on preprod)
+ref.price.isExpired;   // boolean
+ref.outRef.txHash;     // the oracle UTXO tx hash
+ref.outRef.outputIndex;
+
+const cardanoscan = `https://preprod.cardanoscan.io/transaction/${ref.outRef.txHash}`;
+```
+
+### getPrice(pair)
+
+Same as `getOdvReference` but returns only the price, no UTXO pointer. Use when you do not need the on-chain citation.
+
+```ts
+const price = await c3.getPrice("ADA/USD");
+console.log(price.value, price.isExpired);
+```
+
+### getAllPrices()
+
+Reads every pair in the preset in parallel. Good for a dashboard row.
+
+```ts
+const prices = await c3.getAllPrices();
+for (const p of prices) {
+  console.log(p.pair, p.value, p.isExpired ? "stale" : "fresh");
+}
+```
+
+Feeds that fail to read come back with `rawValue: 0n` and `isExpired: true` instead of throwing, so you can render the list without wrapping each entry in try/catch.
+
+### getOracleReference(pair)
+
+Same shape as `getOdvReference` but reads the legacy (non-ODV) oracle address. Only use this if you need a feed that is not on ODV yet.
+
+```ts
+const ref = await c3.getOracleReference("ADA/USD");
+```
+
+## Listing what is available
+
+### listFeeds()
+
+Legacy feed presets.
+
+```ts
+const feeds = c3.listFeeds();
+// [{ pair: "ADA/USD", address: "addr_test1...", policyId: "...", tokenName: "..." }, ...]
+```
+
+### listOdvFeeds()
+
+The ODV pull-oracle feeds, which is probably what you want.
+
+```ts
+const feeds = c3.listOdvFeeds();
+for (const f of feeds) {
+  console.log(f.pair, f.nodes.length, "nodes");
+}
+```
+
+Each entry has the policy ID, oracle address, reference script pointer, validity length, and the six oracle node URLs and public keys.
+
+## Refreshing a stale price
+
+### submitRound2(lucid, pair, opts?)
+
+The full refresh flow in one call. Collects signed feeds from the six oracle nodes, builds the Round 2 tx, asks the nodes for signatures, signs with your wallet, and submits. Takes about 30 seconds end to end.
+
+```ts
+import { Lucid, Blockfrost } from "@lucid-evolution/lucid";
+import { Charli3 } from "charli3-js";
+
+const lucid = await Lucid(
+  new Blockfrost(
+    "https://cardano-preprod.blockfrost.io/api/v0",
+    process.env.BLOCKFROST_PROJECT_ID!,
+  ),
+  "Preprod",
+);
+lucid.selectWallet.fromSeed(process.env.WALLET_SEED!);
+
+const c3 = new Charli3({ network: "preprod" });
+const result = await c3.submitRound2(lucid, "ADA/USD");
+await lucid.awaitTx(result.txHash!);
+```
+
+**Result:**
+
+```ts
+interface SubmitRound2Result {
+  pair: string;
+  txHash?: string;              // tx hash once submitted
+  signedTxCborHex: string;      // the full signed tx CBOR
+  aggregateMessage: AggregateMessage;
+  build: {
+    medianValue: bigint;        // the IQR consensus median
+    validityMs: { start: number; end: number };
+    rewardDistribution: unknown[];
+  };
+  signatureCollection: CollectSignaturesResult;
+}
+```
+
+**Options:**
+
+```ts
+interface SubmitRound2Options {
+  changeAddress?: string;             // override wallet change address
+  collectFeedsTimeoutMs?: number;     // per-node feed fetch timeout
+  signTimeoutMs?: number;             // per-node signature timeout
+  presetFeeds?: SignedFeedMessage[];  // reuse feeds you already collected
+  dryRun?: boolean;                   // build + sign, do not submit
+  validity?: { startMs: number; endMs: number };
+}
+```
+
+**Cost:** about 1.5 tADA tx fee plus min-UTXO on the outputs. The SDK never takes a cut.
+
+**When to call:** only when the read returned `isExpired: true`. Refreshing a fresh feed is a waste of fees.
+
+## Lower-level: run Round 1 on its own
+
+### collectFeeds(pair, opts?)
+
+Fetches signed feed messages from the six oracle nodes and verifies them, without building a tx. Use this if you want to show "what the nodes are seeing" without posting anything.
+
+```ts
+const feeds = await c3.collectFeeds("ADA/USD");
+
+feeds.median;              // number, the IQR median
+feeds.feeds;               // all feeds collected
+feeds.nonOutliers;         // feeds that passed IQR
+feeds.outliers;            // feeds that did not
+feeds.failed;              // nodes that errored, with error messages
+feeds.validityInterval;    // { start, end } in POSIX ms
+```
+
+Every entry in `feeds.feeds` has `nodeUrl`, `value`, `timestamp`, `messageCborHex`, `signatureHex`, and `verificationKeyHex`. You can show them to the user, or use `presetFeeds` on `submitRound2` later to avoid collecting twice.
+
+## Types
+
+```ts
+interface PriceData {
+  pair: string;
+  value: number;
+  rawValue: bigint;
+  precision: number;
+  createdAt: Date;
+  expiresAt: Date;
+  isExpired: boolean;
+  slot?: number;
+  txHash?: string;
+}
+
+interface OracleReference {
+  pair: string;
+  policyId: string;
+  tokenName: string;
+  address: string;
+  outRef: { txHash: string; outputIndex: number };
+  price: PriceData;
+}
+
+interface OdvFeedConfig {
+  pair: string;
+  policyId: string;
+  oracleAddress: string;
+  validityLengthMs: number;
+  nodes: { url: string; publicKey: string }[];
+  referenceScript?: { address: string; txHash: string; outputIndex: number };
+  feedPrecision?: number;
+}
+```
+
+Full type list is exported from `charli3-js` and also in [src/types.ts](https://github.com/SkepX/charli3-js/blob/main/src/types.ts).
+
+## Lower-level exports
+
+Anything below the `Charli3` class is re-exported for power users:
+
+| Export | Use |
+| --- | --- |
+| `OracleReader` | raw datum reader for custom flows |
+| `OracleNodeClient` | HTTP client for oracle nodes |
+| `buildOdvTx`, `selectOracleUtxos`, `buildVkeyWitnessSetHex` | build a Round 2 tx manually |
+| `buildAggregateMessage`, `medianBigInt`, `vkhOf` | aggregate message + consensus helpers |
+| `consensusNodes`, `calculateRewardDistribution`, `calculateMinFeeAmount` | IQR internals |
+| `parseOracleSettings`, `parseAggState`, `buildAggStateDatumCbor` | datum parsers + builders |
+| `verifyEd25519`, `verifyFeedSignature` | signature verification |
+| `buildSignatureRequest`, `collectTxSignatures` | manual /odv/sign round trip |
+| `PRESETS`, `PREPROD`, `MAINNET`, `getPreset` | network presets |
+
+## Common patterns
+
+### Read-or-refresh
+
+```ts
+let { price, outRef } = await c3.getOdvReference("ADA/USD");
+if (price.isExpired) {
+  await c3.submitRound2(lucid, "ADA/USD");
+  ({ price, outRef } = await c3.getOdvReference("ADA/USD"));
+}
+```
+
+### Price a USD amount in ADA
+
+```ts
+const { price } = await c3.getOdvReference("ADA/USD");
+const adaAmount = usdAmount / price.value;
+const lovelace = BigInt(Math.round(adaAmount * 1_000_000));
+if (lovelace < 1_000_000n) throw new Error("below 1 ADA minimum");
+```
+
+### Show every pair
+
+```ts
+const prices = await c3.getAllPrices();
+return prices.map((p) => ({
+  pair: p.pair,
+  value: p.value,
+  fresh: !p.isExpired,
+  postedAt: p.createdAt.toISOString(),
+}));
+```
+
+## Errors
+
+<AccordionGroup>
+  <Accordion title="No UTXO found at ODV address">
+    Either the feed has never been posted on this network, or Kupo is slow. Retry, or pass your own `kupoUrl` in the constructor.
+  </Accordion>
+  <Accordion title="Aggregate build failed: not enough feeds">
+    Some oracle nodes were offline, so the SDK could not collect enough signed feeds to hit consensus. Usually temporary.
+  </Accordion>
+  <Accordion title="Submit failed with on-chain error">
+    The validator rejected the tx. Common causes: stale validity window (your clock is off), missing signature, or the wallet ran out of tADA.
+  </Accordion>
+</AccordionGroup>
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="How it works" icon="gears" href="/concepts/how-it-works">
+    Round 1 / Round 2, IQR consensus, datum layout.
+  </Card>
+  <Card title="AI agents" icon="robot" href="/guides/ai-agents">
+    Plug the SDK into any tool-calling LLM with one markdown file.
+  </Card>
+</CardGroup>

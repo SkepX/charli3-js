@@ -30,7 +30,8 @@
             "group": "Get started",
             "pages": [
               "introduction",
-              "quickstart"
+              "quickstart",
+              "sdk-guide"
             ]
           },
           {
