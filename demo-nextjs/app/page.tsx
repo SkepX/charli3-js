@@ -74,6 +74,14 @@ async function PageBody() {
           >
             view on npm ↗
           </a>
+          <a
+            className="hero-npm-link"
+            href="https://charli3-js-bc690dc5.mintlify.app/introduction"
+            target="_blank"
+            rel="noreferrer"
+          >
+            read the docs ↗
+          </a>
         </div>
       </header>
 
