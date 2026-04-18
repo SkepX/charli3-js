@@ -1,0 +1,141 @@
+---
+title: "Run the sample app locally"
+description: "Clone the repo, fund a preprod wallet, set one env file, run the dev server."
+---
+
+The sample app is in `demo-nextjs/` inside the main repo. It works against Cardano preprod and uses free-tier services only.
+
+## Prerequisites
+
+- Node.js 20+
+- npm 10+
+- Git
+- Lace wallet (browser extension) set to preprod
+- A free [Blockfrost](https://blockfrost.io) project ID (preprod)
+- An [OpenAI API key](https://platform.openai.com/api-keys) (only needed for the AI agent panel)
+
+<Steps>
+  <Step title="Clone the repo">
+    ```bash
+    git clone https://github.com/SkepX/charli3-js.git
+    cd charli3-js
+    ```
+  </Step>
+
+  <Step title="Build the SDK">
+    The demo uses a local build of the SDK, so build it first.
+
+    ```bash
+    npm install
+    npm run build
+    ```
+  </Step>
+
+  <Step title="Run the setup script">
+    This generates a fresh preprod wallet for the demo, compiles the small Aiken contract, and writes `demo/artifacts.json` with the address the claim panel uses.
+
+    ```bash
+    npm run demo:setup
+    ```
+
+    You should see something like:
+
+    ```
+    script address : addr_test1wqn9aj3r8mdmxuen2deksl438umhst7qut6zgfltzf999xss6mla5
+    wallet address : addr_test1qq...
+    ```
+
+    The seed is written to `demo/.wallet.seed` (gitignored, chmod 600). Keep it private.
+  </Step>
+
+  <Step title="Fund the demo wallet">
+    Open the [Cardano preprod faucet](https://docs.cardano.org/cardano-testnets/tools/faucet), paste the wallet address from the last step, and request 10000 tADA. The server uses this wallet to pay for Round 2 refreshes. Your Lace wallet is separate.
+  </Step>
+
+  <Step title="Install the app deps">
+    ```bash
+    cd demo-nextjs
+    npm install
+    ```
+  </Step>
+
+  <Step title="Configure environment">
+    Create `demo-nextjs/.env.local`:
+
+    ```bash
+    NEXT_PUBLIC_BLOCKFROST_PROJECT_ID=preprod...   # from blockfrost.io
+    OPENAI_API_KEY=sk-...                          # only for the AI agent panel
+    ```
+
+    <Tip>
+    The Blockfrost key starts with `NEXT_PUBLIC_` because Lucid runs in the browser when you sign a tx. Project IDs are scoped and rate-limited, so it is safe to expose.
+    </Tip>
+  </Step>
+
+  <Step title="Start the dev server">
+    ```bash
+    npm run dev
+    ```
+
+    Open [http://localhost:3000](http://localhost:3000). You should see a live ADA/USD price rendered from chain.
+  </Step>
+</Steps>
+
+## What to click first
+
+Follow the [walkthrough](/example-app/walkthrough) for a guided tour. TL;DR:
+
+1. Scroll to **Run the loop**, click **Connect Lace**, then **Deposit 3 tADA**.
+2. Click **Refresh oracle price** (server pays the fee with the demo seed).
+3. Click **Claim locked tADA**. The Aiken validator releases the deposit because the price clears the threshold.
+4. Scroll to **AI agent**, click **Connect Lace**, paste the sample invoice, and sign the payment.
+
+## Deploy to Vercel
+
+<AccordionGroup>
+  <Accordion title="Deploy">
+    ```bash
+    cd demo-nextjs
+    vercel deploy
+    ```
+
+    Set the same two env vars in the Vercel dashboard. The `demo/.wallet.seed` file is read at runtime from the repo root, so it has to be in your private fork or uploaded as a file. For a public deploy, rotate the seed and keep it off GitHub.
+  </Accordion>
+  <Accordion title="Function timeouts">
+    The agent route has `maxDuration = 120` so a Round 2 tx can confirm. Vercel Hobby limits you to 10 seconds, so you need Pro or higher for the full flow. Or run the refresh in the browser.
+  </Accordion>
+  <Accordion title="Pick a region">
+    Pick a region near Blockfrost's infrastructure (Europe works well). Cold starts matter for Round 2, so keep the function warm if you expect traffic.
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Hero price shows --">
+    No UTXO was returned for the ODV address. Either the Kupo endpoint in the preset is down, or the preprod network is under maintenance. Check `npx ts-node examples/read-price.ts` from the repo root for a stack trace.
+  </Accordion>
+  <Accordion title="`Lace is on network 1, switch to preprod`">
+    Open Lace, Settings, Network, switch to Preprod Testnet, reconnect.
+  </Accordion>
+  <Accordion title="`OPENAI_API_KEY is not set`">
+    The agent panel needs an OpenAI key in `demo-nextjs/.env.local`. Restart `npm run dev` after adding it.
+  </Accordion>
+  <Accordion title="Refresh button stuck on `Building tx`">
+    The demo wallet ran out of tADA, or Blockfrost is throttling. Refund at the faucet and try again.
+  </Accordion>
+  <Accordion title="`Cannot convert undefined to a BigInt`">
+    `demo/artifacts.json` is missing. Re-run `npm run demo:setup` from the repo root.
+  </Accordion>
+</AccordionGroup>
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Walkthrough" icon="list-check" href="/example-app/walkthrough">
+    Guided tour of the UI with screenshots.
+  </Card>
+  <Card title="How the SDK works" icon="gears" href="/concepts/how-it-works">
+    The Round 1 / Round 2 model the app is built on.
+  </Card>
+</CardGroup>

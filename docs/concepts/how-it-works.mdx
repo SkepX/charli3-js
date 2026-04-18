@@ -1,0 +1,122 @@
+---
+title: "How the SDK works"
+description: "A tour of the moving parts: pull oracle loop, Round 1 signed feeds, Round 2 aggregate tx, and how the SDK wires them together."
+---
+
+`charli3-js` wraps two rounds of on-chain activity that together make up a Charli3 price update. Knowing what each round does makes the API obvious.
+
+## The pull-oracle model
+
+Nobody pre-posts prices. Whenever an app needs a fresh price, it pays a small fee to post one. Other readers then use that price for free until it expires (5 minutes on preprod). Cheap to read, honest to use: the chain shows exactly who signed what and when.
+
+## Round 1: signed feeds from each node
+
+Each oracle node publishes a signed price message. It contains:
+
+- The pair (like `ADA/USD`)
+- A price value with 6 decimal places
+- A validity window (start slot, end slot)
+- An Ed25519 signature from the node's key
+
+Round 1 is where trust comes from. The SDK fetches every node's latest signed message over HTTP and checks the signature against the public keys baked into the SDK.
+
+```ts
+import { Charli3 } from "charli3-js";
+
+const c3 = new Charli3({ network: "preprod" });
+const feeds = await c3.collectFeeds("ADA/USD");
+// feeds.entries[].message   (raw signed payload)
+// feeds.entries[].signature (Ed25519 over the CBOR bytes)
+// feeds.entries[].value     (decoded price in base units)
+```
+
+If a node is offline, slow, or sends a bad message, the SDK drops it and keeps going with the rest.
+
+## Round 2: one on-chain tx
+
+Round 2 combines those signed messages into one Cardano transaction:
+
+<Steps>
+  <Step title="Pick a price">
+    The SDK throws out outliers (IQR, the same trick a statistics class teaches). The middle value of what is left becomes the on-chain price.
+  </Step>
+  <Step title="Build the message">
+    It builds a CBOR message with the feeds used, the median price, the validity window, and how to split the fee among the nodes that contributed.
+  </Step>
+  <Step title="Build the tx">
+    Using Lucid Evolution, the SDK spends the current oracle UTXO and produces a new one with the new price datum. It attaches the reference script UTXO so the validator can read it.
+  </Step>
+  <Step title="Collect signatures">
+    The validator wants signatures from the nodes that contributed. The SDK asks each node to sign the tx body, then adds those signatures to the tx.
+  </Step>
+  <Step title="Submit">
+    The wallet pays the ~1.5 tADA fee and broadcasts. Takes about 30 seconds on preprod.
+  </Step>
+</Steps>
+
+```ts
+const result = await c3.submitRound2(lucid, "ADA/USD");
+console.log(result.txHash);
+```
+
+Once the tx is on chain, anyone can call `getOdvReference("ADA/USD")` and see the new price.
+
+## The whole loop, side by side
+
+<Frame>
+```
+reader side                        refresher side
+-----------                        --------------
+getOdvReference()                  collectFeeds()      -> Round 1 (off-chain)
+  read UTXO                          pick price (IQR)
+  parse datum                        buildOdvTx()
+  return price + freshness           collect signatures
+                                     submit()          -> Round 2 (on-chain)
+```
+</Frame>
+
+Most apps only need the left side. The right side runs when the price expires.
+
+## What ships in the SDK
+
+<AccordionGroup>
+  <Accordion title="Presets (src/config/presets.ts)">
+    All the preprod and mainnet values: oracle addresses, policy IDs, reference script UTXO, feed list, node URLs and keys, validity length, Kupo endpoint. If Charli3 ever changes them, you get the new values with `npm update charli3-js`.
+  </Accordion>
+  <Accordion title="Chain layer (src/chain/kupo.ts)">
+    A small Kupo client for reading UTXOs and datums. You can swap it by passing your own `kupoUrl`.
+  </Accordion>
+  <Accordion title="Oracle reader (src/oracle/reader.ts)">
+    Finds the oracle UTXO, reads the datum, returns price + freshness + UTXO.
+  </Accordion>
+  <Accordion title="Node client (src/oracle/client.ts)">
+    Calls each oracle node over HTTP, checks signatures, returns the collected feeds.
+  </Accordion>
+  <Accordion title="Round 2 builder (src/odv/round2.ts)">
+    Builds the Round 2 transaction. Handles the tricky bits the validator cares about (see below).
+  </Accordion>
+  <Accordion title="Signature client (src/odv/sign-client.ts)">
+    Asks the oracle nodes to sign the tx body, then packs those signatures into the format Lucid expects.
+  </Accordion>
+</AccordionGroup>
+
+## Two things that took real work
+
+A lot of the effort was making the Round 2 tx actually pass validation. Two things were sneaky:
+
+<Note>
+**CBOR map ordering.** The validator hashes the message and compares bytes. Maps have to be built in the exact byte order the validator expects, or it rejects the tx with a hash mismatch. The SDK builds them that way.
+</Note>
+
+<Note>
+**Slot-rounded validity bounds.** The validator sees slot numbers, not milliseconds. So the timestamps in the datum have to match the validator's view *after slot rounding*, not what the wallet clock says. The SDK rounds the start down and the end up to the nearest slot before writing them to the datum.
+</Note>
+
+Both only failed at submit time with on-chain error traces. They are handled for you now. If you ever hit them, something upstream is probably passing raw milliseconds instead of slot-aligned values.
+
+## What the SDK does not do
+
+- It does not run an oracle node. It talks to the ones Charli3 runs.
+- It does not hold keys. Signing happens in your Lucid wallet or in the oracle nodes.
+- It does not hide fees. Round 2 costs ~1.5 tADA and you supply a wallet that can pay.
+- It does not change the trust model. Same node keys, same validator as the Python SDK.

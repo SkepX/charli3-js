@@ -1,0 +1,177 @@
+---
+title: "AI agents integration"
+description: "Teach any tool-calling LLM (Masumi agents, Claude Skills, Cursor, custom OpenAI) to read and refresh Charli3 prices with one markdown file."
+---
+
+`charli3-js` ships with a one-file spec called `skill.md`. Paste it into any agent framework and the agent learns how to use Charli3 as a tool. It can then read a live price, refresh it when stale, and quote or settle a payment honestly.
+
+<Card title="Grab skill.md" icon="file-lines" href="https://charli3-js-demo.vercel.app/skill.md">
+  Served alongside the live demo. Also copy-paste-able via the **copy skill.md** button in the demo UI.
+</Card>
+
+## What skill.md contains
+
+One markdown file with five things:
+
+1. **What the skill does** so the agent knows when to use it.
+2. **Install command** (`npm i charli3-js @lucid-evolution/lucid`).
+3. **Two tools** with code: `get_charli3_price(pair)` and `refresh_charli3_price(pair)`.
+4. **The workflow** the agent should follow: read -> refresh if stale -> read again -> act.
+5. **Hard rules**: never guess a price, credit Charli3 ODV, include the Cardanoscan link, check the address prefix, enforce the 1 ADA minimum.
+
+Paste the whole file into a system prompt, or split it into a tool manifest and a rules section. Both work.
+
+## Wiring it into an agent
+
+<Tabs>
+  <Tab title="Masumi agent">
+    Masumi agents pay each other in ADA on Cardano. When one agent quotes a job in USD, it needs an honest rate. Charli3 is that rate.
+
+    1. Host `skill.md` somewhere your agent can fetch, or bundle it in your repo.
+    2. Add two tools to your agent that match the skill:
+       - `get_charli3_price(pair: string)` which calls `c3.getOdvReference(pair)`
+       - `refresh_charli3_price(pair: string)` which calls `c3.submitRound2(lucid, pair)`
+    3. Add `skill.md` to your agent's system prompt, or pass it in as context.
+    4. Let the agent decide when to call each tool based on the rules in the file.
+
+    <Note>
+    When both agents in a Masumi conversation cite the same Charli3 UTXO, the rate is auditable. The other agent can look up the same UTXO and see the same price.
+    </Note>
+  </Tab>
+
+  <Tab title="Claude Skills">
+    Put `skill.md` in your skill directory, add a short frontmatter, and Claude loads it on demand.
+
+    ```yaml
+    ---
+    name: charli3-oracle
+    description: Read live Cardano prices and settle payments in ADA via the Charli3 ODV pull oracle.
+    ---
+    ```
+
+    Claude will invoke the skill when a conversation involves pricing something in ADA or settling a USD amount on Cardano.
+  </Tab>
+
+  <Tab title="OpenAI tool calling">
+    The sample app in `demo-nextjs/app/api/agent/route.ts` is a working reference. It registers three tools:
+
+    ```ts
+    const TOOLS = [
+      { type: "function", function: { name: "get_charli3_ada_usd", ... } },
+      { type: "function", function: { name: "submit_round2_refresh", ... } },
+      { type: "function", function: { name: "propose_payment", ... } },
+    ];
+    ```
+
+    The system prompt is a shorter version of `skill.md`. It forces the order: read -> refresh if stale -> read again -> validate -> propose. [View the route on GitHub](https://github.com/SkepX/charli3-js/blob/main/demo-nextjs/app/api/agent/route.ts).
+  </Tab>
+
+  <Tab title="Cursor / generic LLM">
+    Drop `skill.md` into your repo, reference it in your `.cursorrules` or system prompt:
+
+    ```
+    When a task involves Cardano prices or ADA/USD settlement, follow
+    the rules in /skill.md and use the charli3-js SDK.
+    ```
+
+    The agent now has a consistent, terse spec to ground its tool calls against.
+  </Tab>
+</Tabs>
+
+## A minimal agent in 50 lines
+
+Here is the shape of the integration, independent of framework:
+
+```ts
+import OpenAI from "openai";
+import { Charli3 } from "charli3-js";
+import { Lucid, Blockfrost } from "@lucid-evolution/lucid";
+
+const c3 = new Charli3({ network: "preprod" });
+
+const tools = [
+  {
+    type: "function" as const,
+    function: {
+      name: "get_charli3_price",
+      description: "Read the latest on-chain price for a pair from the Charli3 ODV pull oracle. Returns is_expired.",
+      parameters: {
+        type: "object",
+        properties: { pair: { type: "string" } },
+        required: ["pair"],
+      },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "refresh_charli3_price",
+      description: "Post a fresh Round-2 tx when get_charli3_price returned is_expired: true. Takes ~30s.",
+      parameters: {
+        type: "object",
+        properties: { pair: { type: "string" } },
+        required: ["pair"],
+      },
+    },
+  },
+];
+
+async function runTool(name: string, args: { pair: string }) {
+  if (name === "get_charli3_price") {
+    const ref = await c3.getOdvReference(args.pair);
+    return {
+      pair: ref.pair,
+      price_usd: ref.price.value,
+      is_expired: ref.price.isExpired,
+      oracle_utxo: `${ref.outRef.txHash}#${ref.outRef.outputIndex}`,
+    };
+  }
+  if (name === "refresh_charli3_price") {
+    const lucid = await Lucid(new Blockfrost(URL, PROJECT_ID), "Preprod");
+    lucid.selectWallet.fromSeed(process.env.AGENT_SEED!);
+    const { txHash } = await c3.submitRound2(lucid, args.pair);
+    await lucid.awaitTx(txHash);
+    return { tx_hash: txHash };
+  }
+}
+```
+
+Hand that to any tool-calling LLM with `skill.md` in the system prompt and you have a Charli3-aware agent.
+
+## Why skill.md exists
+
+Three reasons:
+
+1. **Portable.** Not tied to Claude, OpenAI, or Cursor. Any framework that accepts markdown context works.
+2. **Short.** One file, no extra docs to load. Smaller prompts are cheaper and more reliable.
+3. **Versioned.** `skill.md` lives in the repo next to the SDK. When the SDK changes, the file updates in the same commit.
+
+## Rules your agent must follow
+
+These are the rules from `skill.md`:
+
+<AccordionGroup>
+  <Accordion title="Never guess a price">
+    Always call `get_charli3_price` before quoting or paying. If the read fails, refuse to give a number.
+  </Accordion>
+  <Accordion title="Credit Charli3 ODV when you cite a rate">
+    The user should know the rate came from an on-chain oracle, not from the model. Include the Cardanoscan link to the UTXO.
+  </Accordion>
+  <Accordion title="Refresh only when is_expired is true">
+    A refresh costs about 1.5 tADA. Only call it when the read says stale. The window is 5 minutes on preprod.
+  </Accordion>
+  <Accordion title="Check the address prefix">
+    Preprod: `addr_test1...`. Mainnet: `addr1...`. Reject the wrong one instead of signing.
+  </Accordion>
+  <Accordion title="Respect the 1 ADA minimum">
+    Cardano rejects payments under 1_000_000 lovelace. If the USD amount divided by the rate is lower, tell the user.
+  </Accordion>
+</AccordionGroup>
+
+## See it in action
+
+The [sample app](/example-app/walkthrough) has a working end-to-end agent. Drop a USD invoice, watch the tool-call trace, sign in Lace.
+
+<Card title="Live demo" icon="browser" href="https://charli3-js-demo.vercel.app">
+  Scroll to the **AI agent** section and click **insert sample invoice**.
+</Card>

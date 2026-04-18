@@ -1,0 +1,81 @@
+---
+title: "Sample app overview"
+description: "The Next.js reference app built for the hackathon. Connect Lace, run the pull-oracle loop, pay a USD invoice in ADA with an AI agent."
+---
+
+The `demo-nextjs` app is the example app shipped with `charli3-js`. One Next.js 15 app, deployed to Vercel, using the SDK all the way through: read a price, refresh it, lock funds behind a price rule, release them, and pay a USD invoice in ADA with an AI agent.
+
+<Card title="Live demo" icon="browser" href="https://charli3-js-demo.vercel.app">
+  Open the deployed demo in a new tab. Lace on preprod required.
+</Card>
+
+## What the demo shows
+
+<CardGroup cols={2}>
+  <Card title="Hero price" icon="chart-line">
+    Live ADA/USD price read from chain on every page load, from a Next.js Server Component.
+  </Card>
+  <Card title="Pull-oracle loop" icon="arrows-rotate">
+    Connect Lace, deposit 3 tADA behind a price rule, post a fresh Round 2 tx, then claim.
+  </Card>
+  <Card title="AI invoice agent" icon="robot">
+    Paste a USD invoice. A GPT-4o-mini agent uses the SDK as a tool, suggests an ADA amount, and you sign in Lace.
+  </Card>
+  <Card title="Side by side" icon="code-compare">
+    A tab that shows the same refresh action in Python SDK and `charli3-js` next to each other.
+  </Card>
+</CardGroup>
+
+## Architecture at a glance
+
+<Frame>
+```
+app/page.tsx          Server Component, reads hero price via charli3-js
+components/
+  NavBar              sticky section nav
+  ClaimPanel          deposit / refresh / claim via Lucid + Lace (client)
+  AiAgentPanel        invoice drop-box, tool-calling chat (client)
+  CodeCompare         Python vs charli3-js side-by-side
+  InstallPill         copy-to-clipboard for `npm i charli3-js`
+app/api/
+  script              loads the Aiken validator from demo/artifacts.json
+  refresh             posts a Round 2 tx server-side using the demo seed
+  agent               OpenAI tool-calling loop (get price, refresh, validate, propose)
+  oracle-ref          exposes the current ODV reference for the client
+public/
+  skill.md            one-file AI-agent integration spec
+  sample-invoice.pdf  sample invoice the agent can parse
+```
+</Frame>
+
+Every call to Cardano either:
+
+- Reads via `new Charli3({ network: "preprod" })` inside a Server Component or API route, or
+- Signs via Lucid, using either Lace in the browser for the user's own actions, or a seed file on the server for the Round 2 refresh.
+
+## The stack
+
+- Next.js 15 (App Router) + React 18
+- `charli3-js` 0.1.0
+- Lucid Evolution for tx building and CIP-30 bridging
+- Blockfrost for preprod chain access
+- OpenAI Chat Completions with tool calling (model: `gpt-4o-mini`)
+- pdfkit for the sample invoice PDF
+- Plain CSS, no component library
+
+## Run it
+
+<CardGroup cols={2}>
+  <Card title="Run locally" icon="laptop-code" href="/example-app/run-locally">
+    Clone, install, fund a preprod wallet, and run the dev server in under 10 minutes.
+  </Card>
+  <Card title="Walkthrough" icon="list-check" href="/example-app/walkthrough">
+    Step-by-step tour of the deployed demo: what each panel does and what to click.
+  </Card>
+</CardGroup>
+
+## Repo
+
+<Card title="GitHub" icon="github" href="https://github.com/SkepX/charli3-js">
+  `demo-nextjs/` in the monorepo. MIT licensed, fork freely.
+</Card>

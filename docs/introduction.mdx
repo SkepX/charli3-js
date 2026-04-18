@@ -1,0 +1,63 @@
+---
+title: "Introduction"
+description: "A TypeScript SDK for the Charli3 pull oracle on Cardano. One import, one call, a fresh price on chain."
+---
+
+`charli3-js` is the first TypeScript SDK for the Charli3 pull oracle on Cardano. It lets any Node, Next.js, or Vercel app read live on-chain prices and post fresh ones in three lines. No Python, no sidecar, no extra service.
+
+```ts
+import { Charli3 } from "charli3-js";
+
+const c3 = new Charli3({ network: "preprod" });
+const { price } = await c3.getOdvReference("ADA/USD");
+console.log(price.value, price.isExpired);
+```
+
+## What you get
+
+<CardGroup cols={2}>
+  <Card title="Read on-chain prices" icon="chart-line">
+    One call gives you the USD value, freshness, and the UTXO it came from.
+  </Card>
+  <Card title="Post a fresh price" icon="refresh">
+    One call collects signed feeds from the oracle nodes, builds the tx, and submits it.
+  </Card>
+  <Card title="Runs in your app" icon="bolt">
+    Lives in your Next.js route or Node service. No subprocess, no YAML, no Python.
+  </Card>
+  <Card title="Auto-updated presets" icon="lock">
+    Oracle addresses and keys ship with each release. Update with `npm update charli3-js`.
+  </Card>
+</CardGroup>
+
+## Install
+
+```bash
+npm install charli3-js @lucid-evolution/lucid
+```
+
+## Three ways to use it
+
+<CardGroup cols={3}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Two-minute path from `npm install` to a fresh price in a Next.js app.
+  </Card>
+  <Card title="Sample app" icon="browser" href="/example-app/overview">
+    The hackathon demo, ready to fork. Connect Lace, run the pull-oracle loop, pay a USD invoice in ADA.
+  </Card>
+  <Card title="AI agents" icon="robot" href="/guides/ai-agents">
+    Drop one `skill.md` file into Masumi, Claude, Cursor, or any tool-calling LLM to teach it Charli3.
+  </Card>
+</CardGroup>
+
+## Why this exists
+
+Before this, the only way to use Charli3 was the Python SDK. If your app is on Node, Next.js, or Vercel, that means running Python on the side. `charli3-js` removes that step. Same oracle, same on-chain contract, same nodes. Just inside your app instead of next to it. [Full comparison](/concepts/vs-python).
+
+## Hackathon context
+
+Built for the Charli3 Oracles Hackathon, Track 3 (Oracle Tooling). The goal is to make it easier for Cardano builders to use a pull oracle. MIT licensed, source on GitHub.
+
+<Card title="GitHub" icon="github" href="https://github.com/SkepX/charli3-js">
+  github.com/SkepX/charli3-js
+</Card>

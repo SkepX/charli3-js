@@ -1,0 +1,138 @@
+---
+title: "Compared to the Python SDK"
+description: "Same on-chain contract, same oracle nodes. Different runtime assumptions."
+---
+
+The official Charli3 SDK is written in Python. It works. But if your app is on Node, Next.js, or Vercel, you have to run a second Python service next to it. `charli3-js` removes that step.
+
+## Both SDKs do the same on-chain work
+
+They call the same oracle nodes, trust the same keys, and build a Round 2 tx the same on-chain contract accepts. The chain does not care which SDK you used. That is the point.
+
+<Note>
+**Scope.** `charli3-js` covers ODV pull oracles (Round 1 + Round 2). The Python SDK also covers the older push oracles and some Charli3 ops tools. If you need those, keep using the Python SDK.
+</Note>
+
+## Same action, different code
+
+<CodeGroup>
+
+```yaml python-sdk-config.yaml
+# client.yaml that the Python SDK loads at boot
+network: preprod
+blockfrost:
+  project_id_env: BLOCKFROST_PROJECT_ID
+  base_url: https://cardano-preprod.blockfrost.io/api
+
+wallet:
+  mnemonic_env: WALLET_MNEMONIC
+  account_index: 0
+  address_index: 0
+
+oracle:
+  pair: ADA/USD
+  address: addr_test1wq...
+  policy_id: 886dcb2363e160c944e63cf544ce6f6265b22ef7c4e2478dd975078e
+  tokens:
+    c3cs: "43334353"
+    c3ra: "43334241"
+    c3as: "43334153"
+    c3rt: "43335254"
+  odv_validity_length_ms: 300000
+  price_precision: 6
+
+reference_script:
+  utxo_reference:
+    tx_id: 7a69e9d3d90826f861107e4b503c56e08c40d092416a50bad37fc89865a78cd1
+    index: 0
+
+nodes:
+  - root_url: http://35.208.117.223:8001
+    pub_key: ed25519_pub_1a9b...0f2c
+  - root_url: http://35.208.117.223:8002
+    pub_key: ed25519_pub_7c44...e81d
+  # ...four more nodes
+```
+
+```python python-sdk-refresh.py
+from charli3_offchain_core.client import OdvClient
+from pycardano import BlockFrostChainContext, Network
+import os, asyncio, sys
+
+async def refresh():
+    ctx = BlockFrostChainContext(
+        project_id=os.environ["BLOCKFROST_PROJECT_ID"],
+        network=Network.TESTNET,
+    )
+    client = OdvClient.from_yaml("client.yaml", ctx)
+    tx_id = await client.submit_round2(pair="ADA/USD")
+    await client.wait_for_confirmation(tx_id)
+    print("ADA/USD refreshed:", tx_id)
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(refresh())
+    except Exception as e:
+        print("refresh failed:", e, file=sys.stderr)
+        sys.exit(1)
+```
+
+```ts charli3-js-refresh.ts
+// app/api/refresh/route.ts - the entire file
+import { Charli3 } from "charli3-js";
+import { Lucid, Blockfrost } from "@lucid-evolution/lucid";
+import { NextResponse } from "next/server";
+
+export async function POST() {
+  const lucid = await Lucid(
+    new Blockfrost(URL, PROJECT_ID),
+    "Preprod",
+  );
+  lucid.selectWallet.fromSeed(SEED);
+
+  const c3 = new Charli3({ network: "preprod" });
+  const { txHash } = await c3.submitRound2(lucid, "ADA/USD");
+
+  return NextResponse.json({ txHash });
+}
+```
+
+</CodeGroup>
+
+## The practical differences
+
+|                     | Python SDK                                              | charli3-js                                                 |
+| ------------------- | ------------------------------------------------------- | ---------------------------------------------------------- |
+| **Runtime**         | Python 3.10+, virtualenv, pycardano                     | Node 20+, same process as your app                         |
+| **Config**          | `client.yaml` (40+ lines, edited by hand)               | Preset ships with each release; update with `npm update`   |
+| **Integration**     | 60 to 80 lines of setup code                            | 3 lines per action                                         |
+| **Next.js fit**     | Separate Python service running next to your app        | Drop it into an API route, works on Vercel                 |
+| **Keys**            | Wallet seed in env, handled by the SDK                  | Any Lucid wallet: seed, browser wallet (Lace), HD key      |
+| **Time to first tx** | About half a day (setup, YAML, deploy)                  | Under 10 minutes                                           |
+| **On-chain result** | Same datum                                              | Same datum                                                 |
+
+## Why this matters for Cardano builders
+
+Most Cardano tools (Lucid, MeshSDK, Blockfrost, Lace, Vercel templates) are JavaScript or TypeScript. Asking someone to add a Python service just to read a price is a lot. Asking them to add one npm package is not.
+
+Fewer moving parts means:
+
+- More oracle-backed apps get built (less setup to do)
+- More Round 2 txs happen (which is how Charli3 earns)
+- Fewer things break in production
+- No extra server just to read one price
+
+## When to use which
+
+<CardGroup cols={2}>
+  <Card title="Use charli3-js" icon="check">
+    You are building a web app, a Next.js API route, a Cardano wallet, a Discord bot, a CLI tool, or an AI agent that already runs on Node.
+  </Card>
+  <Card title="Use the Python SDK" icon="python">
+    You need push-oracle support, Charli3 ops tools, or you already run Python with pycardano.
+  </Card>
+</CardGroup>
+
+## They can work together
+
+You can run the Python SDK for one job and `charli3-js` for another. They read the same on-chain data and produce the same kind of tx. Mix and match by service.

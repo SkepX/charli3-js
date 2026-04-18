@@ -1,0 +1,118 @@
+---
+title: "Demo walkthrough"
+description: "Guided tour of every panel in the sample app, with screenshots."
+---
+
+The fastest way to see what the SDK does: click through the demo and watch the chain change. The full tour takes about 5 minutes once Lace is funded.
+
+<Note>
+Screenshots below live in `docs/images/walkthrough/`. The deployed demo may differ slightly if this doc lags behind `main`.
+</Note>
+
+## 1. The hero price
+
+Every page load reads the current ADA/USD price from chain using `c3.getOdvReference("ADA/USD")` in a Server Component. The SDK reads the datum for you, and the UI shows the value, whether it is fresh, and how old it is.
+
+<Frame caption="Live ADA/USD hero. Fresh means the datum is inside its 5-minute validity window.">
+  <img src="/images/walkthrough/hero.png" alt="Hero price block showing $0.324812 per ADA" />
+</Frame>
+
+**What the code does:**
+
+```tsx
+const { price } = await new Charli3({ network: "preprod" })
+  .getOdvReference("ADA/USD");
+```
+
+If `price.isExpired` is true, the badge says `stale`, and the Refresh button in the next section fixes it.
+
+## 2. Run the loop
+
+Scroll to **Run the loop**. This runs the full pull-oracle flow with a small on-chain contract: deposit tADA, lock it behind a price rule, refresh, claim.
+
+<Frame caption="The three-step loop. Each step lands a tx on preprod.">
+  <img src="/images/walkthrough/run-the-loop.png" alt="Deposit, Refresh, Claim panel" />
+</Frame>
+
+<Steps>
+  <Step title="Connect Lace">
+    The panel asks Lace for its network and your address. If Lace is on mainnet, the demo refuses and asks you to switch.
+  </Step>
+  <Step title="Deposit 3 tADA">
+    Builds a Lucid tx that sends 3 tADA to the contract, with a rule saying "release once ADA/USD is at or above $0.10, to me". Your Lace wallet signs and sends it.
+  </Step>
+  <Step title="Refresh oracle price">
+    Calls `POST /api/refresh`. On the server, Lucid signs a Round 2 tx with the demo seed, gets signatures from the six oracle nodes, and submits. About 30 seconds to confirm. The hero price above is fresh after this.
+  </Step>
+  <Step title="Claim locked tADA">
+    Builds a tx that spends the locked UTXO and points the contract at the fresh oracle UTXO. You sign with Lace. The contract checks the price is at or above $0.10, then releases the funds to you.
+  </Step>
+</Steps>
+
+**Why this is the main demo:** it uses every part of the SDK. Read a datum, run IQR, build Round 2, collect signatures, submit, and read the new datum again from a different contract.
+
+## 3. AI agent: pay a USD invoice in ADA
+
+Scroll to **AI agent: pay a USD invoice in ADA**. This is the big feature: a GPT-4o-mini agent uses `charli3-js` as a tool and pays a USD invoice in ADA.
+
+<Frame caption="The agent panel gates behind Lace. No chat until the wallet is connected.">
+  <img src="/images/walkthrough/agent-gate.png" alt="Connect Lace gate" />
+</Frame>
+
+<Steps>
+  <Step title="Connect Lace">
+    Same Lace connect as the loop panel. The agent needs your wallet to build the final payment tx.
+  </Step>
+  <Step title="Drop a sample invoice">
+    Click **insert sample invoice** to fill the text box with a one-line USD invoice and a preprod `addr_test1...` address. You can also download the sample PDF.
+  </Step>
+  <Step title="Send">
+    The agent runs these tools in order:
+    1. `get_charli3_ada_usd` (reads the price from chain)
+    2. `submit_round2_refresh` (posts a fresh Round 2 tx, only if the first read was stale)
+    3. `get_charli3_ada_usd` again (reads the fresh price)
+    4. `validate_address` (checks the preprod address)
+    5. `propose_payment` (hands you a ready-to-sign payment)
+  </Step>
+  <Step title="Watch the thought process">
+    Every tool call shows as a numbered step in the chat, with a Cardanoscan link for each read or refresh. This is how you know the agent is not guessing the price.
+  </Step>
+  <Step title="Sign and pay">
+    Click **Sign and pay with Lace**. Lucid builds a payment for the ADA amount the agent worked out, you sign in Lace, and the agent confirms with a Cardanoscan link.
+  </Step>
+</Steps>
+
+<Frame caption="Tool-call timeline: read price, refresh if stale, validate address, propose payment.">
+  <img src="/images/walkthrough/agent-trace.png" alt="Tool-call thought process with Cardanoscan link" />
+</Frame>
+
+## 4. Copy skill.md to give any agent this power
+
+The agent header has a **copy skill.md** button. It copies one markdown file you can paste into any tool-calling LLM (Claude, Cursor, Masumi agents, custom OpenAI setups) so that agent can read and refresh Charli3 prices without copying any code.
+
+<Card title="How to wire skill.md into your agent" icon="robot" href="/guides/ai-agents">
+  The full guide for Masumi, Claude Skills, and generic tool-calling frameworks.
+</Card>
+
+## 5. Side by side: Python SDK vs charli3-js
+
+The bottom of the page has a tab that shows the same refresh action in both SDKs. The `charli3-js` side is one Next.js API route. The Python side is a YAML config, a Python file, and a plan for hosting them outside your web app.
+
+<Frame>
+  <img src="/images/walkthrough/code-compare.png" alt="Python SDK vs charli3-js side by side" />
+</Frame>
+
+[Full comparison](/concepts/vs-python).
+
+## If you are showing this to hackathon judges
+
+The shortest path is:
+
+1. Open the deployed URL.
+2. Connect Lace (preprod).
+3. Click **Deposit 3 tADA**, wait for the tx.
+4. Click **Refresh oracle price**, wait about 30 seconds.
+5. Click **Claim locked tADA**.
+6. Scroll to the AI agent, insert the sample invoice, send, sign.
+
+Every click lands a real preprod tx. Every price the agent quotes comes from the on-chain datum. Nothing is mocked or cached.

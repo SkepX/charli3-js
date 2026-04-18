@@ -1,0 +1,95 @@
+---
+title: "Quickstart"
+description: "npm install to a live ADA/USD price in a Next.js app, in under two minutes."
+---
+
+The shortest path from an empty Next.js app to a live on-chain ADA/USD price in your browser.
+
+<Steps>
+  <Step title="Create a Next.js app">
+    ```bash
+    npx create-next-app@latest my-oracle-app
+    cd my-oracle-app
+    ```
+
+    Pick any options. App Router is recommended.
+  </Step>
+
+  <Step title="Install the SDK">
+    ```bash
+    npm install charli3-js
+    ```
+
+    No extra setup. Preprod and mainnet presets ship with each release, so just update the package when addresses change.
+  </Step>
+
+  <Step title="Read a price from a Server Component">
+    Edit `app/page.tsx`:
+
+    ```tsx app/page.tsx
+    import { Charli3 } from "charli3-js";
+
+    export const revalidate = 30;
+
+    export default async function Page() {
+      const c3 = new Charli3({ network: "preprod" });
+      const { price, outRef } = await c3.getOdvReference("ADA/USD");
+
+      return (
+        <main style={{ padding: 48, fontFamily: "ui-sans-serif" }}>
+          <h1>ADA/USD on chain</h1>
+          <p style={{ fontSize: 56, margin: 0 }}>
+            ${price.value.toFixed(6)}
+          </p>
+          <p>
+            {price.isExpired ? "stale, pull a fresh one" : "fresh"} /
+            posted {price.createdAt.toISOString()}
+          </p>
+          <p style={{ opacity: 0.6, fontFamily: "monospace" }}>
+            utxo {outRef.txHash.slice(0, 16)}...#{outRef.outputIndex}
+          </p>
+        </main>
+      );
+    }
+    ```
+  </Step>
+
+  <Step title="Run it">
+    ```bash
+    npm run dev
+    ```
+
+    Open [http://localhost:3000](http://localhost:3000). You should see the current ADA/USD price read directly from the Cardano preprod chain.
+  </Step>
+</Steps>
+
+## What just happened
+
+<AccordionGroup>
+  <Accordion title="Where did the price come from?">
+    `getOdvReference` asks a public indexer (Kupo) for the UTXO at Charli3's oracle address, reads the datum, and returns the price. No API key, no login, no subscription.
+  </Accordion>
+  <Accordion title="What if the price is stale?">
+    `price.isExpired` tells you if the price is past its 5-minute window on preprod. If it is, call `c3.submitRound2(lucid, "ADA/USD")` to post a fresh one. See [Refreshing a price](/api-reference/charli3#submitround2).
+  </Accordion>
+  <Accordion title="Do I need a wallet?">
+    Not for reading. You only need a wallet when you want to post a fresh price yourself. Reading is free and keyless.
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="How the SDK works" icon="gears" href="/concepts/how-it-works">
+    Round 1, Round 2, picking a price, and why the time window matters.
+  </Card>
+  <Card title="Sample app" icon="browser" href="/example-app/overview">
+    A fuller example: Lace wallet, deposit and claim, AI invoice agent.
+  </Card>
+  <Card title="Refresh on-chain" icon="refresh" href="/api-reference/charli3#submitround2">
+    Post a fresh price with Lucid and a funded wallet.
+  </Card>
+  <Card title="AI agents" icon="robot" href="/guides/ai-agents">
+    One markdown file to teach any tool-calling LLM how to use Charli3.
+  </Card>
+</CardGroup>
