@@ -22,59 +22,66 @@
     }
   },
   "navigation": {
-    "anchors": [
+    "tabs": [
       {
-        "anchor": "Live demo",
-        "icon": "browser",
-        "href": "https://charli3-js-demo.vercel.app"
-      },
-      {
-        "anchor": "npm package",
-        "icon": "box",
-        "href": "https://www.npmjs.com/package/charli3-js"
-      },
-      {
-        "anchor": "Charli3",
-        "icon": "link",
-        "href": "https://charli3.io"
+        "tab": "Docs",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": [
+              "introduction",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Concepts",
+            "pages": [
+              "concepts/how-it-works",
+              "concepts/vs-python"
+            ]
+          },
+          {
+            "group": "Example app",
+            "pages": [
+              "example-app/overview",
+              "example-app/run-locally",
+              "example-app/walkthrough"
+            ]
+          },
+          {
+            "group": "AI agents",
+            "pages": [
+              "guides/ai-agents"
+            ]
+          },
+          {
+            "group": "API reference",
+            "pages": [
+              "api-reference/charli3"
+            ]
+          }
+        ]
       }
     ],
-    "groups": [
-      {
-        "group": "Get started",
-        "pages": [
-          "introduction",
-          "quickstart"
-        ]
-      },
-      {
-        "group": "Concepts",
-        "pages": [
-          "concepts/how-it-works",
-          "concepts/vs-python"
-        ]
-      },
-      {
-        "group": "Example app",
-        "pages": [
-          "example-app/overview",
-          "example-app/run-locally",
-          "example-app/walkthrough"
-        ]
-      },
-      {
-        "group": "AI agents",
-        "pages": [
-          "guides/ai-agents"
-        ]
-      },
-      {
-        "group": "API reference",
-        "pages": [
-          "api-reference/charli3"
-        ]
-      }
-    ]
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Live demo",
+          "icon": "browser",
+          "href": "https://charli3-js-demo.vercel.app"
+        },
+        {
+          "anchor": "npm package",
+          "icon": "box",
+          "href": "https://www.npmjs.com/package/charli3-js"
+        },
+        {
+          "anchor": "Charli3",
+          "icon": "link",
+          "href": "https://charli3.io"
+        }
+      ]
+    }
   },
   "redirects": [
     {
