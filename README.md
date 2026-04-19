@@ -12,7 +12,13 @@
 [![license](https://img.shields.io/npm/l/charli3-js?color=blue)](./LICENSE)
 [![cardano preprod](https://img.shields.io/badge/cardano-preprod-0033ad?logo=cardano&logoColor=white)](https://docs.cardano.org/cardano-testnets/getting-started/)
 
-[**Live demo →**](https://charli3-js-demo.vercel.app) · [**Docs →**](https://charli3-js-bc690dc5.mintlify.app) · [**npm →**](https://www.npmjs.com/package/charli3-js)
+[**Live demo →**](https://charli3-js-demo.vercel.app) · [**Docs →**](https://charli3-js-bc690dc5.mintlify.app) · [**npm →**](https://www.npmjs.com/package/charli3-js) · [**Demo video →**](https://youtu.be/7n8Y-pAmlJg)
+
+<br />
+
+[![Watch the demo](https://img.youtube.com/vi/7n8Y-pAmlJg/maxresdefault.jpg)](https://youtu.be/7n8Y-pAmlJg)
+
+*3-minute walkthrough: SDK, live Vercel demo, docs, and the AI agent.*
 
 </div>
 
