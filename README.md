@@ -11,7 +11,6 @@
 [![node](https://img.shields.io/node/v/charli3-js?color=44cc11&logo=node.js&logoColor=white)](https://nodejs.org)
 [![license](https://img.shields.io/npm/l/charli3-js?color=blue)](./LICENSE)
 [![cardano preprod](https://img.shields.io/badge/cardano-preprod-0033ad?logo=cardano&logoColor=white)](https://docs.cardano.org/cardano-testnets/getting-started/)
-[![hackathon](https://img.shields.io/badge/Oracles%20Hackathon-2026-ff6b6b)](https://docs.charli3.io)
 
 [**Live demo →**](https://charli3-js-demo.vercel.app) · [**Docs →**](https://charli3-js-bc690dc5.mintlify.app) · [**npm →**](https://www.npmjs.com/package/charli3-js)
 
