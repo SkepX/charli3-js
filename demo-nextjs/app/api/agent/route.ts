@@ -163,13 +163,13 @@ async function toolSubmitRound2Refresh(): Promise<
   }
   let seed = process.env.DEMO_WALLET_SEED?.trim() ?? "";
   if (!seed) {
-    const seedPath = path.join(process.cwd(), "..", "demo", ".wallet.seed");
+    const seedPath = path.join(process.cwd(), ".wallet.seed");
     try {
       seed = fs.readFileSync(seedPath, "utf-8").trim();
     } catch {
       return {
         error:
-          "No demo wallet seed configured. Set DEMO_WALLET_SEED env var or create demo/.wallet.seed locally.",
+          "No demo wallet seed configured. Run `npm run setup` locally, or set DEMO_WALLET_SEED in your deploy env.",
       };
     }
   }

@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 function loadArtifacts(): Record<string, string> {
   const envJson = process.env.DEMO_ARTIFACTS_JSON;
   if (envJson) return JSON.parse(envJson);
-  const artifactsPath = path.join(process.cwd(), "..", "demo", "artifacts.json");
+  const artifactsPath = path.join(process.cwd(), "artifacts.json");
   const raw = fs.readFileSync(artifactsPath, "utf-8");
   return JSON.parse(raw);
 }
@@ -27,7 +27,7 @@ export async function GET() {
     const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
       {
-        error: `script artifacts unavailable: ${msg}. Run \`npm run demo:setup\` locally, or set DEMO_ARTIFACTS_JSON in your deploy env.`,
+        error: `script artifacts unavailable: ${msg}. Run \`npm run setup\` locally, or set DEMO_ARTIFACTS_JSON in your deploy env.`,
       },
       { status: 500 },
     );

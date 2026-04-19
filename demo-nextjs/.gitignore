@@ -6,3 +6,5 @@ node_modules
 *.tsbuildinfo
 .DS_Store
 .vercel
+.wallet.seed
+artifacts.json

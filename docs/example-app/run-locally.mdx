@@ -13,24 +13,25 @@ Every command block below tells you which directory to run it from. Follow top t
 - Free [Blockfrost](https://blockfrost.io) project id (Preprod network)
 - (Optional) [OpenAI API key](https://platform.openai.com/api-keys) if you want the AI agent panel
 
-## 1. Clone and build the SDK
+## 1. Clone the repo and install
 
 ```bash
 # any dir
 git clone https://github.com/SkepX/charli3-js.git
-cd charli3-js
+cd charli3-js/demo-nextjs
 npm install
-npm run build
 ```
+
+The app imports `charli3-js` from npm, so there is no SDK build step.
 
 ## 2. Generate the demo wallet and contract address
 
 ```bash
-# in charli3-js/
-npm run demo:setup
+# in charli3-js/demo-nextjs/
+npm run setup
 ```
 
-This prints two addresses. Copy the second one (`wallet address : addr_test1...`) — you will paste it into the faucet next. The seed is saved to `demo/.wallet.seed` (gitignored).
+This prints two addresses. Copy the second one (`wallet address : addr_test1...`) — you will paste it into the faucet next. The seed is saved to `demo-nextjs/.wallet.seed` (gitignored).
 
 <Note>
 The output lines that start with `script address :` and `wallet address :` are **printed output**, not commands to run.
@@ -40,13 +41,7 @@ The output lines that start with `script address :` and `wallet address :` are *
 
 Go to the [Cardano preprod faucet](https://docs.cardano.org/cardano-testnets/tools/faucet), paste the `wallet address` from step 2, and send 10 000 tADA. This wallet pays for Round 2 refreshes on the server. Your own Lace wallet is separate.
 
-## 4. Install the web app and set the env
-
-```bash
-# in charli3-js/
-cd demo-nextjs
-npm install
-```
+## 4. Set the env
 
 Create `demo-nextjs/.env.local` with your Blockfrost id (and optionally your OpenAI key):
 
@@ -79,16 +74,16 @@ Open [http://localhost:3000](http://localhost:3000). You should see a live ADA/U
 
 <AccordionGroup>
   <Accordion title="`next: command not found` when I run npm run dev">
-    You're in `demo-nextjs/` but never ran `npm install` there. Run it from `demo-nextjs/`, then `npm run dev` again.
+    You're in `demo-nextjs/` but never ran `npm install` there. Run it, then `npm run dev` again.
   </Accordion>
-  <Accordion title="`Missing script: dev` at repo root">
-    `npm run dev` belongs in `demo-nextjs/`, not the SDK root. `cd demo-nextjs` first.
+  <Accordion title="`Missing script: setup` or `Missing script: dev`">
+    These scripts live in `demo-nextjs/package.json`, not the repo root. `cd demo-nextjs` first.
   </Accordion>
   <Accordion title="`zsh: command not found: script` or `: wallet`">
     You pasted the example output of step 2 as commands. `script address :` and `wallet address :` are **printed**, not run.
   </Accordion>
   <Accordion title="Hero price shows --">
-    Kupo endpoint hiccup. Retry the page; if it keeps failing, run `npx ts-node examples/read-price.ts` from the SDK root for a stack trace.
+    Kupo endpoint hiccup. Retry the page.
   </Accordion>
   <Accordion title="`Lace is on network 1, switch to preprod`">
     Open Lace, Settings, Network, switch to Preprod Testnet, reconnect.
@@ -96,8 +91,8 @@ Open [http://localhost:3000](http://localhost:3000). You should see a live ADA/U
   <Accordion title="Refresh button stuck on `Building tx`">
     The demo wallet ran out of tADA, or Blockfrost is throttling. Refund at the faucet and try again.
   </Accordion>
-  <Accordion title="`Cannot convert undefined to a BigInt`">
-    `demo/artifacts.json` is missing. Re-run `npm run demo:setup` from the SDK root.
+  <Accordion title="`script artifacts unavailable` or `Cannot convert undefined to a BigInt`">
+    `demo-nextjs/artifacts.json` is missing. Re-run `npm run setup` from `demo-nextjs/`.
   </Accordion>
 </AccordionGroup>
 

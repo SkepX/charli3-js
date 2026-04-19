@@ -10,7 +10,7 @@ export const maxDuration = 120;
 function loadDemoSeed(): string {
   const envSeed = process.env.DEMO_WALLET_SEED?.trim();
   if (envSeed) return envSeed;
-  const seedPath = path.join(process.cwd(), "..", "demo", ".wallet.seed");
+  const seedPath = path.join(process.cwd(), ".wallet.seed");
   const raw = fs.readFileSync(seedPath, "utf-8").trim();
   if (!raw) throw new Error(".wallet.seed is empty");
   return raw;
