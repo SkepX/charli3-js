@@ -1,11 +1,23 @@
+<div align="center">
+
 # charli3-js
 
-**TypeScript SDK for the Charli3 oracle on Cardano.** One import, one call, a fresh price on chain.
+### TypeScript SDK for the Charli3 oracle on Cardano
 
-- **Live demo:** https://charli3-js-demo.vercel.app
-- **Docs:** https://charli3-js-bc690dc5.mintlify.app
-- **npm:** https://www.npmjs.com/package/charli3-js
-- **Oracles Hackathon** submission, built against Cardano preprod.
+**One import, one call, a fresh price on chain.**
+
+[![npm version](https://img.shields.io/npm/v/charli3-js?color=cb3837&logo=npm&label=charli3-js)](https://www.npmjs.com/package/charli3-js)
+[![npm downloads](https://img.shields.io/npm/dm/charli3-js?color=blue&label=downloads)](https://www.npmjs.com/package/charli3-js)
+[![node](https://img.shields.io/node/v/charli3-js?color=44cc11&logo=node.js&logoColor=white)](https://nodejs.org)
+[![license](https://img.shields.io/npm/l/charli3-js?color=blue)](./LICENSE)
+[![cardano preprod](https://img.shields.io/badge/cardano-preprod-0033ad?logo=cardano&logoColor=white)](https://docs.cardano.org/cardano-testnets/getting-started/)
+[![hackathon](https://img.shields.io/badge/Oracles%20Hackathon-2026-ff6b6b)](https://docs.charli3.io)
+
+[**Live demo →**](https://charli3-js-demo.vercel.app) · [**Docs →**](https://charli3-js-bc690dc5.mintlify.app) · [**npm →**](https://www.npmjs.com/package/charli3-js)
+
+</div>
+
+---
 
 ```bash
 npm install charli3-js
