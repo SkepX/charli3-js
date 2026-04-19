@@ -79,11 +79,15 @@ async function main() {
   console.log("wallet address :", walletAddress);
   console.log();
   console.log("next:");
-  console.log("  1. visit the faucet and send 10 000 tADA to the wallet address:");
+  console.log("  1. fund the wallet above with the preprod faucet (10 000 tADA):");
   console.log("     https://docs.cardano.org/cardano-testnets/tools/faucet");
-  console.log("  2. get a preprod Blockfrost projectId (free):");
+  console.log("  2. grab a free preprod Blockfrost project id:");
   console.log("     https://blockfrost.io  ->  add new project  ->  Network: Cardano preprod");
-  console.log("  3. export BLOCKFROST_PROJECT_ID='preprod...' and run `npm run demo:deposit`");
+  console.log("  3. run the web demo:");
+  console.log("     cd demo-nextjs");
+  console.log("     npm install");
+  console.log("     echo 'NEXT_PUBLIC_BLOCKFROST_PROJECT_ID=preprod...' > .env.local");
+  console.log("     npm run dev        # open http://localhost:3000");
   console.log();
   console.log("artifacts saved to", artifactsPath);
 }
