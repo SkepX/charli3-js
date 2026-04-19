@@ -16,9 +16,9 @@
 
 <br />
 
-<a href="https://youtu.be/7n8Y-pAmlJg" target="_blank" rel="noopener noreferrer"><img src="https://img.youtube.com/vi/7n8Y-pAmlJg/maxresdefault.jpg" alt="Watch the demo" /></a>
+<img src="https://img.youtube.com/vi/7n8Y-pAmlJg/maxresdefault.jpg" alt="Demo video thumbnail" />
 
-*3-minute walkthrough: SDK, live Vercel demo, docs, and the AI agent.*
+<a href="https://youtu.be/7n8Y-pAmlJg" target="_blank" rel="noopener noreferrer"><em>3-minute walkthrough: SDK, live Vercel demo, docs, and the AI agent.</em></a>
 
 </div>
 
